@@ -8,8 +8,14 @@ export default class AuthController {
     constructor(
         private readonly router: MyRouter,
         private readonly authService: AuthService,
-    ) { }
-    register() {
+    ) {
+        this.findUser()
+        this.register()
+        this.login()
+        this.profile()
+        this.verifyToken()
+    }
+    private register() {
         this.router.post(
             '/register',
             async ({ body }, req) => {
@@ -43,7 +49,7 @@ export default class AuthController {
         )
     }
 
-    login() {
+    private login() {
         this.router.post(
             '/login',
             async ({ body }, req) => {
@@ -73,7 +79,7 @@ export default class AuthController {
         )
     }
 
-    findUser = () => this.router.get('/', async ({ query }, req) => {
+    private findUser = () => this.router.get('/', async ({ query }, req) => {
         const cmd = 'post-register', invoke = 'initInvoke', node = 'client'
         const { detailLog, summaryLog } = new Logger(req, invoke, cmd, '');
         try {
@@ -93,7 +99,7 @@ export default class AuthController {
         middleware: authMiddleware
     })
 
-    findUserById = () => this.router.get('/:id', async ({ params }, req) => {
+    private findUserById = () => this.router.get('/:id', async ({ params }, req) => {
         const cmd = 'get-user', invoke = 'initInvoke', node = 'client'
         const { detailLog, summaryLog } = new Logger(req, invoke, cmd, '');
         try {
@@ -149,7 +155,7 @@ export default class AuthController {
         params: paramsSchema
     })
 
-    profile = () => this.router.get('/profile', async ({ }, req) => {
+    private profile = () => this.router.get('/profile', async ({ }, req) => {
         const cmd = 'get-profile', invoke = 'initInvoke', node = 'client'
         const { detailLog, summaryLog } = new Logger(req, invoke, cmd, '');
         const { id } = <{ id: string }>req.signedToken
@@ -207,13 +213,25 @@ export default class AuthController {
         middleware: authMiddleware
     })
 
+    private verifyToken = () => this.router.post('/verify-token', async ({ body }, req) => {
+        const cmd = 'post-verify-token', invoke = 'initInvoke', node = 'client'
+        const { detailLog, summaryLog } = new Logger(req, invoke, cmd, '');
+        try {
+            detailLog.addInputRequest(node, cmd, invoke, body);
+            summaryLog.addSuccessBlock(node, cmd, 'null', 'Success')
+            const response = await this.authService.verifyToken(body, detailLog, summaryLog)
+            detailLog.addOutputRequest(node, cmd, invoke, response)
+            summaryLog.addSuccessBlock(node, cmd, '20000', 'Success')
+            return response
+        } catch (error) {
+            detailLog.addError(node, cmd, invoke, error);
+            summaryLog.addErrorBlock(node, cmd, '500', 'An error occurred');
+            return { statusCode: 500, error: 'An error occurred' }
+        } finally {
+            detailLog.end()
+            summaryLog.end()
+        }
+    })
 
-    execute() {
-        this.findUser()
-        this.register()
-        this.login()
-        this.profile()
-
-        return this.router.Register()
-    }
+    execute = () => this.router.Register()
 }

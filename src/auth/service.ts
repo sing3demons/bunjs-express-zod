@@ -1,6 +1,6 @@
 import type { DetailLog, SummaryLog } from "../server/logger";
 import type { t } from "../server";
-import { createUserSchema, loginSchema, paramsSchema, type ReturnTypeResponse, type User } from "./schema";
+import { createUserSchema, loginSchema, paramsSchema, type ReturnTypeResponse, type User, type VerifyToken } from "./schema";
 import jwt from "jsonwebtoken";
 import config from "../config";
 import type { TPrismaClient } from "../db";
@@ -172,11 +172,34 @@ export default class AuthService {
         }
     }
 
-    private verifyToken = async (token: string, type: 'ACCESS' | 'REFRESH' = 'ACCESS') => {
-        if (type === 'ACCESS') {
-            return jwt.verify(token, config.get('publicKey'))
+    public verifyToken = async ({ accessToken }: VerifyToken, detailLog: DetailLog, summaryLog: SummaryLog): ReturnTypeResponse<{}> => {
+        const cmd = 'verify-token', invoke = 'initInvoke'
+        const response = { statusCode: 200, success: true, message: 'Success', data: [] }
+
+        try {
+            const secretOrPrivateKey = Buffer.from(config.get('publicKey'), 'base64')
+            const token = jwt.verify(accessToken, secretOrPrivateKey)
+            if (!token) {
+                response.statusCode = 401
+                response.success = false
+                response.message = 'Unauthorized'
+                return response
+            }
+
+            return response
+
+        } catch (error) {
+            detailLog.addError(this.node, cmd, invoke, error);
+            summaryLog.addErrorBlock(this.node, cmd, '500', 'Unauthorized')
+
+            response.statusCode = 401
+            response.success = false
+            response.message = 'Unauthorized'
+            return response
+        }finally{
+            detailLog.addInputResponse(this.node, cmd, invoke, response)
+            summaryLog.addSuccessBlock(this.node, cmd, '20000', 'Success')
         }
-        return jwt.verify(token, config.get('refreshPublicKey'))
     }
 
 

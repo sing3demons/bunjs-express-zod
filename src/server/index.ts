@@ -81,6 +81,7 @@ const globalErrorHandler = (
 class Server {
     private readonly app: Express = express();
     constructor(cb?: () => void) {
+        this.app.disable('x-powered-by')
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use(metricsMiddleware)

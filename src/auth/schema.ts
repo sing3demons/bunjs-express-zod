@@ -1,7 +1,5 @@
-import type { number } from "zod";
 import { t } from "../server";
 
-// Example schemas
 const paramsSchema = t.object({
     id: t.string(),
 });
@@ -49,7 +47,13 @@ export type User = {
     profile: Profile[]
 }
 
-export { paramsSchema, querySchema, createUserSchema, loginSchema };
+const verifyTokenSchema = t.object({
+    accessToken: t.string(),
+})
+
+export type VerifyToken = t.infer<typeof verifyTokenSchema>
+
+export { paramsSchema, querySchema, createUserSchema, loginSchema, verifyTokenSchema };
 
 export type ReturnTypeResponse<T extends unknown> = Promise<{
     statusCode: number,
@@ -57,3 +61,4 @@ export type ReturnTypeResponse<T extends unknown> = Promise<{
     message: string,
     data: T
 }>
+
