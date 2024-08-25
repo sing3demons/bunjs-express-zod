@@ -1,3 +1,4 @@
+import config from "../config";
 import authMiddleware from "../middleware/auth";
 import type { MyRouter } from "../server";
 import Logger from "../server/logger";
@@ -14,6 +15,7 @@ export default class AuthController {
         this.login()
         this.profile()
         this.verifyToken()
+        this.findUserById()
     }
     private register() {
         this.router.post(
@@ -79,7 +81,7 @@ export default class AuthController {
         )
     }
 
-    private findUser = () => this.router.get('/', async ({ query }, req) => {
+    private findUser = () => this.router.get('/users', async ({ query }, req) => {
         const cmd = 'post-register', invoke = 'initInvoke', node = 'client'
         const { detailLog, summaryLog } = new Logger(req, invoke, cmd, '');
         try {
@@ -99,7 +101,7 @@ export default class AuthController {
         middleware: authMiddleware
     })
 
-    private findUserById = () => this.router.get('/:id', async ({ params }, req) => {
+    private findUserById = () => this.router.get('/users/:id', async ({ params }, req) => {
         const cmd = 'get-user', invoke = 'initInvoke', node = 'client'
         const { detailLog, summaryLog } = new Logger(req, invoke, cmd, '');
         try {
@@ -171,7 +173,7 @@ export default class AuthController {
                 data.profile.forEach((item: any) => {
                     const profileData: Profile = {
                         id: item.id,
-                        href: `/profile/${item.id}`,
+                        href: `${config.get('host')}/api/auth/profile/${item.id}`,
                         bio: item?.bio || '',
                         userId: item.userId,
                         langCode: item.langCode,
@@ -187,7 +189,7 @@ export default class AuthController {
             }
             const users: User = {
                 id: data?.id || '',
-                href: data?.id ? `/users/${data?.id}` : '',
+                href: data?.id ? `${config.get('host')}/api/auth/users/${data?.id}` : '',
                 email: data?.email || '',
                 role: data?.role || '',
                 profile: profile

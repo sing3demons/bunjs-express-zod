@@ -3,6 +3,7 @@ import AuthService from "./auth/service";
 import AuthController from "./auth/controller";
 import { connect, disconnect } from "./db";
 import db from "./db";
+import config from "./config";
 
 const app = new Server(async () => await connect());
 
@@ -13,4 +14,4 @@ const app = new Server(async () => await connect());
     app.router('/api/auth', authController.execute())
 }
 
-app.listen(3000, async () => await disconnect());
+app.listen(config.get('port'), async () => await disconnect());
