@@ -2,7 +2,7 @@ import type { DetailLog, SummaryLog } from "../server/logger";
 import type { t } from "../server";
 import { createUserSchema, loginSchema, paramsSchema, type ReturnTypeResponse, type User } from "./schema";
 import jwt from "jsonwebtoken";
-import config from "../server/config";
+import config from "../config";
 import type { TPrismaClient } from "../db";
 
 

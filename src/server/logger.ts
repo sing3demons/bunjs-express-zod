@@ -2,22 +2,10 @@ import dayjs from 'dayjs'
 import type { Request } from 'express'
 import { v7 as uuid } from 'uuid'
 import { createLogger, format, transports } from 'winston'
-import config from './config'
+import config from '../config'
 import path from 'path'
 import 'winston-daily-rotate-file'; // Importing to extend winston
 import fs from 'fs'
-
-const logDir = 'logs';
-const filename = path.join(path.basename(logDir))
-if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir);
-}
-
-const dailyRotateFileTransport = new transports.DailyRotateFile({
-    filename: `${filename}/%DATE%-app.log`,
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-});
 
 const level = config.get('level')
 const appName = config.get('app_name')
@@ -30,12 +18,27 @@ export const logger = createLogger({
     defaultMeta: { service: appName },
     transports: [
         new transports.Console(),
-        dailyRotateFileTransport
 
     ],
     exceptionHandlers: [],
     exitOnError: false,
 })
+
+if (config.get('logFile')) {
+    const logDir = 'logs';
+    const filename = path.join(path.basename(logDir))
+    if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir);
+    }
+    const dailyRotateFileTransport = new transports.DailyRotateFile({
+        filename: `${filename}/%DATE%-app.log`,
+        datePattern: 'YYYY-MM-DD',
+        zippedArchive: true,
+    });
+    logger.transports.push(dailyRotateFileTransport)
+}
+
+const formatDate = 'YYYY-MM-DD HH:mm:ss'
 
 interface ILogger {
     Host: string
@@ -87,7 +90,6 @@ interface Result {
     Desc: string
 }
 
-
 export class DetailLog {
     private Host: string
     private AppName: string
@@ -110,10 +112,10 @@ export class DetailLog {
         if (!req.headers['x-transaction-id']) { req.headers['x-transaction-id'] = uuid() }
         const session = <string>req.headers['x-transaction-id']
         this.Session = session
-        this.InitInvoke = `${invoke}_${dayjs().format('YYYY-MM-DD HH:mm:ss')}`
+        this.InitInvoke = `${invoke}_${dayjs().format(formatDate)}`
         this.Scenario = cmd
         this.Identity = identity || ''
-        this.InputTimeStamp = dayjs().format('YYYY-MM-DD HH:mm:ss')
+        this.InputTimeStamp = dayjs().format(formatDate)
         this.Input = []
         this.OutputTimeStamp = ''
         this.Output = []
@@ -209,7 +211,7 @@ export class DetailLog {
     }
 
     public end(result: string = 'OK', desc: string = 'Success') {
-        this.OutputTimeStamp = dayjs().format('YYYY-MM-DD HH:mm:ss')
+        this.OutputTimeStamp = dayjs().format(formatDate)
         this.ProcessingTime = dayjs(this.OutputTimeStamp).diff(dayjs(this.InputTimeStamp), 'ms').toString()
         const loggerInfo: ILogger = {
             Host: this.Host,
@@ -285,7 +287,7 @@ export class SummaryLog {
         if (!req.headers['x-transaction-id']) { req.headers['x-transaction-id'] = uuid() }
         const session = <string>req.headers['x-transaction-id']
         this.Session = session
-        this.InitInvoke = `${invoke}_${dayjs().format('YYYY-MM-DD HH:mm:ss')}`
+        this.InitInvoke = `${invoke}_${dayjs().format(formatDate)}`
         this.Scenario = cmd
         this.Identity = identity
         this.ResponseResult = ''
@@ -293,7 +295,7 @@ export class SummaryLog {
         this.Sequences = []
         this.EndProcessTimeStamp = ''
         this.ProcessTime = ''
-        this.InputTimeStamp = dayjs().format('YYYY-MM-DD HH:mm:ss')
+        this.InputTimeStamp = dayjs().format(formatDate)
     }
 
     private addBlock(node: string, cmd: string, Result: string, Desc: string) {
@@ -317,7 +319,7 @@ export class SummaryLog {
     public end(result: string = 'OK', desc: string = 'Success') {
         this.ResponseResult = result
         this.ResponseDesc = desc
-        this.EndProcessTimeStamp = dayjs().format('YYYY-MM-DD HH:mm:ss')
+        this.EndProcessTimeStamp = dayjs().format(formatDate)
         this.ProcessTime = dayjs(this.EndProcessTimeStamp).diff(dayjs(this.InputTimeStamp), 'ms').toString()
         const loggerInfo = {
             Host: this.Host,

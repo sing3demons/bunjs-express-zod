@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { type JwtPayload, verify } from "jsonwebtoken";
-import config from "../server/config";
+import config from "../config";
 
 declare global {
     namespace Express {

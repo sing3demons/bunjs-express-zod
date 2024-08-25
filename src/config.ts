@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-const packageJsonPath = require.resolve("../../package.json")
+const packageJsonPath = require.resolve("../package.json")
 const packageJsonContents = readFileSync(packageJsonPath).toString();
 const packageJson = JSON.parse(packageJsonContents);
 
@@ -9,6 +9,7 @@ interface IConfig {
     timeout: number;
     level: string;
     app_name: string;
+    logFile: boolean
     privateKey: string;
     publicKey: string;
     refreshPrivateKey: string;
@@ -29,6 +30,7 @@ class ConfigManager {
         const publicKey = process.env.PUBLIC_KEY || ''
         const refreshPrivateKey = process.env.REFRESH_PRIVATE_KEY || ''
         const refreshPublicKey = process.env.REFRESH_PUBLIC_KEY || ''
+        const logFile = process.env.LOG_FILE ? process.env.LOG_FILE === 'true' : false
 
         this.config = {
             host,
@@ -39,7 +41,8 @@ class ConfigManager {
             privateKey,
             publicKey,
             refreshPrivateKey,
-            refreshPublicKey
+            refreshPublicKey,
+            logFile
         }
     }
 
